@@ -23,10 +23,10 @@ It never removes deployed revisions and keeps the number of old revisions of
 each proxy that you prefer. While it avoids the tedious clicking through the UI,
 it does require manually executing the script every so often.
 
-To automate this, I produced this repository which provide screipts that provision
-that script as a Cloud Run job that runs on a schedule.  The result is you can
-have that script run on a nightly basis, keeping only the number of old
-revisions you like.
+To automate this, I produced this repository which provide bash scripts that
+provision that nodejs script as a Cloud Run job that runs on a schedule.  The
+result is you can have that nodejs script run on a nightly basis (or weekly, or
+hourly, etc.), keeping only the number of old revisions you like.
 
 ## Deploying this on your own 
 
@@ -170,5 +170,7 @@ There is no service-level guarantee for responses to inquiries posted to that si
 
 ## Bugs
 
-- You can specify only one Apigee project to the Cloud Run Job. 
-  Ideally, it should accept multiple projects.
+- You can specify only one Apigee project to the Cloud Run Job.  Ideally, it
+  should accept multiple projects. For now, you need to configure multiple jobs
+  to clean old revisions from multiple projects. This might be best for hygiene
+  purposes anyway.
