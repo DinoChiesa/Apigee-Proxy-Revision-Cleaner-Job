@@ -19,12 +19,13 @@ apiproxy
 
 *.sh
 *.md
+LICENSE
+NOTICE
 
 **/NOT_USED
 
 env.sh
 env-private.sh
 
-.remote-endpoint-*
 
-sampledata
+*--DO-NOT-COMMIT.txt
