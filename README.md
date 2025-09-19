@@ -49,20 +49,31 @@ Shell](https://cloud.google.com/shell/docs/launching-cloud-shell).
 
 1. This job will run using the [Principle of Least
    Privilege](https://en.wikipedia.org/wiki/Principle_of_least_privilege). The
-   setup uses a custom Role with these [permissions on
+   setup uses a Custom IAM Role with these [permissions on
    Apigee](https://cloud.google.com/iam/docs/roles-permissions/apigee):
 
-   - apigee.deployments.list
-   - apigee.deployments.get
-   - apigee.proxyrevisions.list
-   - apigee.proxyrevisions.get
-   - apigee.proxyrevisions.delete
+   - `apigee.deployments.list`
+   - `apigee.deployments.get`
+   - `apigee.proxies.list`
+   - `apigee.proxies.get`
+   - `apigee.proxyrevisions.list`
+   - `apigee.proxyrevisions.get`
+   - `apigee.proxyrevisions.delete`
+   - `apigee.sharedflowrevisions.list`
+   - `apigee.sharedflows.get`
+   - `apigee.sharedflows.list`
+   - `apigee.sharedflowrevisions.get`
+   - `apigee.sharedflowrevisions.delete`
 
-   The Cloud Run job runs as a service account _with that role_  in the Apigee project.
-   It uses the metadata endpoint in Google cloud to get an Access Token when it runs.
+   The Cloud Run job runs as a service account _with that role_ in the Apigee
+   project.  It uses the metadata endpoint in Google cloud to get an Access
+   Token when it runs.  Because this custom role does not have the ability to
+   undeploy proxies or sharedflows, it will be unable to delete a revision that
+   is deployed.
 
-2. The job is a nodejs program that runs in the cloud.
-   You can specify the number of revisions to keep. It removes old undeployed sharedflows AND proxies.
+2. The job is a nodejs program.  You can specify the Apigee project and the
+   number of revisions to keep. It removes old undeployed sharedflows AND
+   proxies.
 
 2. The setup script sets the schedule to whatever you prefer. See the
    [env.sh](./env.sh) file for the `SCHEDULE` variable.  You can try using
@@ -97,7 +108,6 @@ Shell](https://cloud.google.com/shell/docs/launching-cloud-shell).
    ./1-enable-services.sh
    ```
 
-
 2. Create the custom IAM role that the Cloud Run job will use:
    ```sh
    ./2-create-custom-role.sh
@@ -117,7 +127,6 @@ Shell](https://cloud.google.com/shell/docs/launching-cloud-shell).
    ```sh
    ./5-create-scheduler.sh
    ```
-
 
 
 ## Teardown
