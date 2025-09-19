@@ -5,13 +5,15 @@ that Job, to removes older proxy revisions in Apigee or hybrid.
 
 ## Details
 
-With each import of a "Proxy bundle" into Apigee X, 
-there will be a new revision created. Without some sort of 
-grooming or culling, these revisions accumulate without bound. 
+With each import of a "Proxy bundle" into Apigee X, there will be a new revision
+created. Without some sort of grooming or culling, these revisions accumulate
+without bound.
 
-It's no fun using the UI to click-to-delete the older revisions. 
+It's no fun using the UI to click-to-delete the older revisions.
 
-I created [cleanOldRevisions.js](https://github.com/DinoChiesa/apigee-edge-js-examples/blob/main/cleanOldRevisions.js) for that purpose. 
+I created
+[cleanOldRevisions.js](https://github.com/DinoChiesa/apigee-edge-js-examples/blob/main/cleanOldRevisions.js)
+for that purpose.
 
 You can run it like this from the command line:
 
@@ -19,24 +21,24 @@ You can run it like this from the command line:
 node ./cleanOldRevisions.js -o my-gcp-project-name -K 3 --token $TOKEN --apigeex -v
 ```
 
-It never removes deployed revisions and keeps the number of old revisions of
-each proxy that you prefer. While it avoids the tedious clicking through the UI,
-it does require manually executing the script every so often.
+It never removes deployed revisions and removes all but the N most recent revisions of
+each proxy and sharedflow that you prefer. It avoids the tedious clicking through the UI,
+but it still requires manually executing the script every so often.
 
-To automate this, I produced this repository which provide bash scripts that
+To automate this, I produced this repository which provides bash scripts that
 provision that nodejs script as a Cloud Run job that runs on a schedule.  The
 result is you can have that nodejs script run on a nightly basis (or weekly, or
 hourly, etc.), keeping only the number of old revisions you like.
 
-## Deploying this on your own 
+## Deploying this on your own
 
 To follow the instructions to deploy this in your own environment, you will need the
 following pre-requisites:
 
 - Apigee X or hybrid
 - a Google Cloud project with Cloud Run and Cloud Build enabled
-- various tools: bash, [curl](https://curl.se/), 
-  [gcloud CLI](https://cloud.google.com/sdk/docs/install), 
+- various tools: bash, [curl](https://curl.se/),
+  [gcloud CLI](https://cloud.google.com/sdk/docs/install),
   [jq](https://jqlang.org/)
 
 You can get all of these things in the [Google Cloud
@@ -56,11 +58,11 @@ Shell](https://cloud.google.com/shell/docs/launching-cloud-shell).
    - apigee.proxyrevisions.get
    - apigee.proxyrevisions.delete
 
-   The Cloud Run job runs as a service account _with that role_  in the Apigee project. 
+   The Cloud Run job runs as a service account _with that role_  in the Apigee project.
    It uses the metadata endpoint in Google cloud to get an Access Token when it runs.
- 
-2. The job is a nodejs program that runs in the cloud. 
-   You can specify the number of revisions to keep.
+
+2. The job is a nodejs program that runs in the cloud.
+   You can specify the number of revisions to keep. It removes old undeployed sharedflows AND proxies.
 
 2. The setup script sets the schedule to whatever you prefer. See the
    [env.sh](./env.sh) file for the `SCHEDULE` variable.  You can try using
@@ -100,7 +102,7 @@ Shell](https://cloud.google.com/shell/docs/launching-cloud-shell).
    ```sh
    ./2-create-custom-role.sh
    ```
-   
+
 3. Create the service account for the Cloud Run job:
    ```sh
    ./3-create-service-account-for-job.sh
@@ -110,7 +112,7 @@ Shell](https://cloud.google.com/shell/docs/launching-cloud-shell).
    ```sh
    ./4-create-cleaner-job.sh
    ```
-   
+
 5. Schedule the job:
    ```sh
    ./5-create-scheduler.sh
@@ -120,7 +122,7 @@ Shell](https://cloud.google.com/shell/docs/launching-cloud-shell).
 
 ## Teardown
 
-If you want to remove all these things, you can do so: 
+If you want to remove all these things, you can do so:
 
 1. Remove the scheduler:
    ```sh
@@ -146,7 +148,7 @@ If you want to remove all these things, you can do so:
 
 5. delete the custom role for the Service Account
    ```sh
-   gcloud iam roles delete ${CUSTOM_ROLE_ID} --project=${APIGEE_PROJECT_ID} 
+   gcloud iam roles delete ${CUSTOM_ROLE_ID} --project=${APIGEE_PROJECT_ID}
    ```
 
 ## Disclaimer
@@ -157,7 +159,7 @@ official Google product.
 ## License
 
 This material is [Copyright © 2025 Google LLC](./NOTICE).
-and is licensed under the [Apache 2.0 License](LICENSE). 
+and is licensed under the [Apache 2.0 License](LICENSE).
 
 
 ## Support
@@ -174,3 +176,4 @@ There is no service-level guarantee for responses to inquiries posted to that si
   should accept multiple projects. For now, you need to configure multiple jobs
   to clean old revisions from multiple projects. This might be best for hygiene
   purposes anyway.
+
