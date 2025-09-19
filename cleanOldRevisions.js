@@ -19,7 +19,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-// last saved: <2025-September-18 18:06:35>
+// last saved: <2025-September-18 19:18:14>
 
 import apigeejs from "apigee-edge-js";
 import Getopt from "node-getopt";
@@ -28,7 +28,7 @@ import pLimit from "p-limit";
 
 const common = apigeejs.utility,
   apigee = apigeejs.apigee,
-  version = "20250918-1735",
+  version = "20250918-1917",
   getopt = new Getopt(
     common.commonOptions.concat([
       [
@@ -65,36 +65,6 @@ const getMagicToken = async () => {
   const data = await response.json();
   return data.access_token;
 };
-
-// ========================================================
-process.on("unhandledRejection", (r) =>
-  console.log("\n*** unhandled promise rejection: " + util.format(r)),
-);
-
-const isDeployed = (result) =>
-  (result.environment && result.environment.length != 0) || result.deployments;
-
-const opt = getopt.parse(
-  process.env.CMDARGS
-    ? process.env.CMDARGS.split(new RegExp(" +", "g"))
-    : process.argv.slice(2),
-);
-
-if (opt.options.verbose) {
-  console.log(
-    `Apigee Proxy / Sharedflow revision cleaner tool, version: ${version}\n` +
-      `Node.js ${process.version}\n`,
-  );
-  common.logWrite("start");
-}
-
-if (opt.options.magictoken) {
-  opt.options.token = await getMagicToken();
-  if (!opt.options.token) {
-    console.log("could not get magic token\n");
-    process.exit(1);
-  }
-}
 
 async function examineRevisions(collection, name, revisions) {
   if (opt.options.verbose) {
@@ -151,15 +121,41 @@ async function examineRevisions(collection, name, revisions) {
 
 function validateCollection(v) {
   const allowedValues = ["sharedflows", "proxies", "apiproxies"];
-
-  // First, check if the input string is one of the allowed values
   if (!allowedValues.includes(v)) {
-    // If not, it fails the check, return an empty array or handle as an error
     return null;
   }
-
-  // Map "apiproxies" to "proxies", wrap in an array
   return [v === "apiproxies" ? "proxies" : v];
+}
+
+// ========================================================
+process.on("unhandledRejection", (r) =>
+  console.log("\n*** unhandled promise rejection: " + util.format(r)),
+);
+
+const isDeployed = (result) =>
+  (result.environment && result.environment.length != 0) || result.deployments;
+
+const opt = getopt.parse(
+  process.env.CMDARGS
+    ? process.env.CMDARGS.split(new RegExp(" +", "g"))
+    : process.argv.slice(2),
+);
+
+if (opt.options.verbose) {
+  console.log(
+    `Apigee Proxy & Sharedflow revision cleaner tool, version: ${version}\n` +
+      `Node.js ${process.version}\n`,
+  );
+  common.logWrite("start");
+}
+
+if (opt.options.magictoken) {
+  opt.options.token = await getMagicToken();
+  if (!opt.options.token) {
+    console.log("could not get magic token\n");
+    process.exit(1);
+  }
+  console.log("Got access token from metadata server....");
 }
 
 common.verifyCommonRequiredParameters(opt.options, getopt);
