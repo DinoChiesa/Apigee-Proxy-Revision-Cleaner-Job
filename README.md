@@ -45,14 +45,36 @@ Shell](https://cloud.google.com/shell/docs/launching-cloud-shell).
 
 ## Implementation Notes
 
-This job will run using the Principle of Least Privilege. The setup uses a custom Role with these permissions: 
-- apigee.deployments.list
-- apigee.deployments.get
-- apigee.proxyrevisions.list
-- apigee.proxyrevisions.get
-- apigee.proxyrevisions.delete
+1. This job will run using the [Principle of Least
+   Privilege](https://en.wikipedia.org/wiki/Principle_of_least_privilege). The
+   setup uses a custom Role with these [permissions on
+   Apigee](https://cloud.google.com/iam/docs/roles-permissions/apigee):
 
-The Cloud Run job runs as a service account _with that role_  in the Apigee project. 
+   - apigee.deployments.list
+   - apigee.deployments.get
+   - apigee.proxyrevisions.list
+   - apigee.proxyrevisions.get
+   - apigee.proxyrevisions.delete
+
+   The Cloud Run job runs as a service account _with that role_  in the Apigee project. 
+   It uses the metadata endpoint in Google cloud to get an Access Token when it runs.
+ 
+2. The job is a nodejs program that runs in the cloud. 
+   You can specify the number of revisions to keep.
+
+2. The setup script sets the schedule to whatever you prefer. See the
+   [env.sh](./env.sh) file for the `SCHEDULE` variable.  You can try using
+   [Crontab Guru](https://crontab.guru/#2_*/3_*_*_*) to get a schedule string.
+   You can set the schedule to be nightly, hourly, weekly, whatever you prefer.
+
+2. The Cloud Run job will run in a project. It does not have to be the same
+   project as your Apigee organization.
+
+2. The Cloud Run job will run in a region. It does not have to be the same
+   region as your Apigee instance.
+
+3. The Scheduler will also run in a region. It will be the same region as the
+   Cloud Run Job.
 
 
 
@@ -148,4 +170,5 @@ There is no service-level guarantee for responses to inquiries posted to that si
 
 ## Bugs
 
-- you can specify only one Apigee project in the Cloud Run Job
+- You can specify only one Apigee project to the Cloud Run Job. 
+  Ideally, it should accept multiple projects.
