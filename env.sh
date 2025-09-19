@@ -20,6 +20,9 @@ export CUSTOM_ROLE_ID=apigeeProxyRevisionReaper
 export SCHEDULER_JOB_NAME=proxy-cleaner-scheduler
 export SCHEDULER_SERVICE_ACCOUNT=${SCHEDULER_JOB_NAME}-sa
 
+
 # try https://crontab.guru/#2_*/3_*_*_* to get a schedule string.
 # Eg, every day, at 23:54
 export SCHEDULE="54 23 * * *"
+# The timezone that this time is relative to
+export SCHEDULE_TZ="America/Los_Angeles"
