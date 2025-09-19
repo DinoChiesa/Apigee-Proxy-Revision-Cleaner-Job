@@ -38,12 +38,13 @@ maybe_add_iam_binding_on_sa() {
 
 # ====================================================================
 
-check_shell_variables CLOUDRUN_PROJECT_ID JOB_SERVICE_ACCOUNT CUSTOM_ROLE_ID
+check_shell_variables CLOUDRUN_PROJECT_ID APIGEE_PROJECT_ID JOB_SERVICE_ACCOUNT CUSTOM_ROLE_ID
 check_required_commands gcloud
 
 printf "\nThis script creates the service account the Revision Cleaner Job will run as.\n"
 
-check_and_maybe_create_sa "$JOB_SERVICE_ACCOUNT" "$CLOUDRUN_PROJECT_ID" "$SA_REQUIRED_ROLES"
+check_and_maybe_create_sa "$JOB_SERVICE_ACCOUNT" "$CLOUDRUN_PROJECT_ID"
+apply_roles_to_sa "$JOB_SERVICE_ACCOUNT" "$CLOUDRUN_PROJECT_ID" "$APIGEE_PROJECT_ID" "$SA_REQUIRED_ROLES"
 
 SA_EMAIL="${JOB_SERVICE_ACCOUNT}@${CLOUDRUN_PROJECT_ID}.iam.gserviceaccount.com"
 printf "For the job, the Service Account email is:\n  %s\n" "$SA_EMAIL"

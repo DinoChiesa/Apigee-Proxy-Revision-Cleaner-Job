@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 CURL() {
   [[ -z "${CURL_OUT}" ]] && CURL_OUT=$(mktemp /tmp/apigee-setup-script.curl.out.XXXXXX)
   [[ -f "${CURL_OUT}" ]] && rm ${CURL_OUT}
@@ -69,15 +68,17 @@ check_required_commands() {
 }
 
 apply_roles_to_sa() {
-  local sa_email project ROLE AVAILABLE_ROLES
+  local short_service_account project_for_sa project_for_role required_rolestring sa_email
   local -a SA_REQUIRED_ROLES
-  sa_email="$1"
-  project="$2"
-  required_rolestring="$3"
-  read -r -a SA_REQUIRED_ROLES <<< "$required_rolestring"
-  
+  short_service_account="$1"
+  project_for_sa="$2"
+  project_for_role="$3"
+  required_rolestring="$4"
+  sa_email="${short_service_account}@${project_for_sa}.iam.gserviceaccount.com"
+  read -r -a SA_REQUIRED_ROLES <<<"$required_rolestring"
+
   # shellcheck disable=SC2076
-  AVAILABLE_ROLES=($(gcloud projects get-iam-policy "${project}" \
+  AVAILABLE_ROLES=($(gcloud projects get-iam-policy "${project_for_role}" \
     --flatten="bindings[].members" \
     --filter="bindings.members:${sa_email}" |
     grep -v deleted | grep -A 1 members | grep role | sed -e 's/role: //'))
@@ -88,20 +89,17 @@ apply_roles_to_sa() {
     if ! [[ ${AVAILABLE_ROLES[*]} =~ "${ROLE}" ]]; then
       printf "Adding role %s...\n" "${ROLE}"
 
-      echo "gcloud projects add-iam-policy-binding ${project} \
-                 --condition=None \
+      echo "gcloud projects add-iam-policy-binding ${project_for_role} \
                  --member=serviceAccount:${sa_email} \
                  --role=${ROLE}"
-      if gcloud projects add-iam-policy-binding "${project}" \
-        --condition=None \
+      if gcloud projects add-iam-policy-binding "${project_for_role}" \
         --member="serviceAccount:${sa_email}" \
         --role="${ROLE}" --quiet 2>&1; then
         printf "Success\n"
       else
         printf "\n*** FAILED\n\n"
         printf "You must manually run:\n\n"
-        echo "gcloud projects add-iam-policy-binding ${project} \
-                 --condition=None \
+        echo "gcloud projects add-iam-policy-binding ${project_for_role} \
                  --member=serviceAccount:${sa_email} \
                  --role=${ROLE}"
       fi
@@ -112,10 +110,9 @@ apply_roles_to_sa() {
 }
 
 check_and_maybe_create_sa() {
-  local short_service_account project sa_email rolestring
+  local short_service_account project sa_email
   short_service_account="$1"
   project="$2"
-  rolestring="$3"
   sa_email="${short_service_account}@${project}.iam.gserviceaccount.com"
   printf "Checking for service account %s...\n" "$sa_email"
   echo "gcloud iam service-accounts describe \"$sa_email\""
@@ -125,11 +122,8 @@ check_and_maybe_create_sa() {
     printf "Creating service account %s ...\n" "${short_service_account}"
     echo "gcloud iam service-accounts create \"${short_service_account}\" --project=\"${project}\""
     if gcloud iam service-accounts create "${short_service_account}" --project="${project}" --quiet; then
-      if [[ -n "$rolestring" ]]; then
-        printf "There can be errors if all these changes happen too quickly, so we need to sleep a bit...\n"
-        sleep 12
-        apply_roles_to_sa "$sa_email" "$project" "$rolestring"
-      fi
+      printf "There can be errors if all these changes happen too quickly, so we need to sleep a bit...\n"
+      sleep 12
     else
       printf "Failed to create the service account.\n\n"
       exit 1
@@ -137,10 +131,8 @@ check_and_maybe_create_sa() {
   fi
 }
 
-
 clean_files() {
   rm -f "${example_name}/*.*~"
   rm -fr "${example_name}/bin"
   rm -fr "${example_name}/obj"
 }
-
