@@ -19,7 +19,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-// last saved: <2025-September-18 19:18:14>
+// last saved: <2025-September-19 18:57:19>
 
 import apigeejs from "apigee-edge-js";
 import Getopt from "node-getopt";
@@ -28,7 +28,7 @@ import pLimit from "p-limit";
 
 const common = apigeejs.utility,
   apigee = apigeejs.apigee,
-  version = "20250918-1917",
+  version = "20250919-1849",
   getopt = new Getopt(
     common.commonOptions.concat([
       [
@@ -40,6 +40,11 @@ const common = apigeejs.utility,
         "K",
         "numToKeep=ARG",
         "Required. Max number of revisions of each proxy to retain.",
+      ],
+      [
+        "",
+        "dry-run",
+        "Optional. Dry-run. Do not delete, only summarize what WOULD be deleted.",
       ],
       [
         "",
@@ -71,44 +76,57 @@ async function examineRevisions(collection, name, revisions) {
     common.logWrite("revisions %s: %s", name, JSON.stringify(revisions));
   }
   if (revisions && revisions.length > opt.options.numToKeep) {
-    revisions.sort((a, b) => a - b);
-
-    let reducer = (promise, c, _ix, orig) =>
-      promise.then((a) => {
-        if (a.length >= orig.length - opt.options.numToKeep) {
-          return a;
-        }
-        const options = { name, revision: c };
-        return collection.getDeployments(options).then((result) => {
-          if (opt.options.verbose) {
-            common.logWrite(
-              "deployments (%s r%s): %s",
-              name,
-              c,
-              JSON.stringify(result),
-            );
-          }
-          return isDeployed(result) ? a : [...a, c];
-        });
-      });
-
-    let revisionsToRemove = await revisions.reduce(
-      reducer,
-      Promise.resolve([]),
-    );
-
-    // limit the number of concurrent requests
+    // work concurrently, but limit the number of concurrent requests
     const limit = pLimit(4);
+    revisions.sort((a, b) => a - b);
+    const revisionsToExamine = revisions.slice(
+      0,
+      revisions.length - opt.options.numToKeep,
+    );
+    const checkRevision = async (revision) => {
+      const options = { name, revision };
+      const result = await collection.getDeployments(options);
+      if (opt.options.verbose) {
+        common.logWrite(
+          "deployments (%s r%s): %s",
+          name,
+          revision,
+          JSON.stringify(result),
+        );
+      }
+      return isDeployed(result) ? null : revision;
+    };
+
+    const interimResults = await Promise.all(
+      revisionsToExamine.map((c) => limit(() => checkRevision(c))),
+    );
+    const revisionsToRemove = interimResults.filter((r) => r);
 
     const concurrentDeleter = (revision) =>
-      limit((_) => collection.del({ name, revision }).then((_) => revision));
+      limit((_) =>
+        opt.options["dry-run"]
+          ? Promise.resolve(revision)
+          : collection.del({ name, revision }).then((_) => revision),
+      );
 
     return Promise.all(revisionsToRemove.map(concurrentDeleter)).then(
       (revisions) => {
         revisions = revisions.filter((r) => r);
         if (revisions.length) {
           if (opt.options.verbose) {
-            common.logWrite("deleted %s: %s", name, JSON.stringify(revisions));
+            if (opt.options["dry-run"]) {
+              common.logWrite(
+                "would delete %s: %s",
+                name,
+                JSON.stringify(revisions),
+              );
+            } else {
+              common.logWrite(
+                "deleted %s: %s",
+                name,
+                JSON.stringify(revisions),
+              );
+            }
           }
           return { item: name, revisions };
         }
@@ -173,7 +191,7 @@ const collectionNames = opt.options.collection
   : ["sharedflows", "proxies"];
 
 if (!collectionNames) {
-  console.log("You must specify a valid option for --collection");
+  console.log("You specified an invalid option for --collection");
   getopt.showHelp();
   process.exit(1);
 }
@@ -239,7 +257,9 @@ apigee
 
     return collectionNames.reduce(r, Promise.resolve([])).then((a) => {
       a = a.map((innerArray) => innerArray.filter((item) => item !== null));
-      if (opt.options.verbose) {
+      if (opt.options["dry-run"]) {
+        common.logWrite("summary to delete: " + JSON.stringify(a));
+      } else if (opt.options.verbose) {
         common.logWrite("summary deleted: " + JSON.stringify(a));
       }
     });

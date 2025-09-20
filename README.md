@@ -25,6 +25,11 @@ It never removes deployed revisions and removes all but the N most recent revisi
 each proxy and sharedflow that you prefer. It avoids the tedious clicking through the UI,
 but it still requires manually executing the script every so often.
 
+> BTW, if you want to perform a dry-run:
+> ```sh
+> node ./cleanOldRevisions.js -o my-gcp-project-name -K 3 --token $TOKEN --apigeex -v --dry-run
+> ```
+
 To automate this, I produced this repository which provides bash scripts that
 provision that nodejs script as a Cloud Run job that runs on a schedule.  The
 result is you can have that nodejs script run on a nightly basis (or weekly, or
@@ -118,7 +123,18 @@ Shell](https://cloud.google.com/shell/docs/launching-cloud-shell).
    ./3-create-service-account-for-job.sh
    ```
 
-4. Create the job:
+4. Create the job.
+
+   First, you may want to create a job that performs only a dry-run:
+   ```sh
+   ./4-create-cleaner-job.sh --dry-run
+   ```
+
+   You can test-execute the job right away, if you like.
+
+   After you examine the logs, you will feel comfortable with the expected action.
+   At that point you can Re-Create the job, without the --dry-run flag.
+
    ```sh
    ./4-create-cleaner-job.sh
    ```
@@ -185,4 +201,3 @@ There is no service-level guarantee for responses to inquiries posted to that si
   should accept multiple projects. For now, you need to configure multiple jobs
   to clean old revisions from multiple projects. This might be best for hygiene
   purposes anyway.
-

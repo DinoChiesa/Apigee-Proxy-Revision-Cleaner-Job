@@ -1,6 +1,6 @@
 {
   "name": "clean-proxy-revisions",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "description": "a package defining a Cloud Run job to clean old Apigee proxy revisions",
   "main": "cleanOldRevisions.js",
@@ -11,10 +11,9 @@
   "author": "Dino Chiesa <dchiesa@google.com>",
   "license": "Apache-2.0",
   "dependencies": {
-    "apigee-edge-js": "^0.4.34",
-    "node-fetch": "^3.3.2",
+    "apigee-edge-js": "^0.4.40",
     "node-getopt": "git://github.com/tuxpoldo/node-getopt.git#05e498731c14b648fa332ca78d3a301c5e4be440",
-    "p-limit": "^4.0.0"
+    "p-limit": "^7.1.1"
   },
   "engines": {
     "node": ">= 22.16.0",
