@@ -19,7 +19,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-// last saved: <2025-September-19 18:57:19>
+// last saved: <2025-September-19 19:14:53>
 
 import apigeejs from "apigee-edge-js";
 import Getopt from "node-getopt";
@@ -134,7 +134,7 @@ async function examineRevisions(collection, name, revisions) {
       },
     );
   }
-  return null;
+  return Promise.resolve(null);
 }
 
 function validateCollection(v) {
